@@ -143,6 +143,148 @@ Ensures:
 
 ---
 
+## 🔀 Fuzz Testing
+
+In addition to unit tests, this project includes a comprehensive suite of **fuzz tests** to validate contract behavior under a wide range of inputs.
+
+Fuzz testing allows us to automatically test the contract against **randomized values**, ensuring robustness and uncovering edge cases that fixed inputs might miss.
+
+---
+
+### 🧠 What is Fuzz Testing?
+
+Fuzz testing (or property-based testing) verifies that certain **invariants and properties always hold true**, regardless of the specific input values.
+
+Instead of testing:
+
+```text
+stake(10 ether)
+
+we test:
+
+stake(any valid amount)
+```
+This approach is critical in smart contract development, where unexpected inputs can lead to vulnerabilities.
+
+---
+
+## 🧪 Fuzz Test Coverage
+
+The fuzz tests focus on validating core properties of the staking system.
+
+---
+
+### ✅ Stake Fuzz Tests
+
+**Property:**
+
+> For any valid stake amount, the contract state updates correctly.
+
+**Validations:**
+
+- User balance increases correctly  
+- `totalStaked` reflects the new deposit  
+- Contract balance increases accordingly  
+- User external balance decreases by the staked amount  
+
+---
+
+### ✅ Withdraw Fuzz Tests
+
+**Property:**
+
+> For any valid deposit and withdraw amount, withdrawals behave correctly.
+
+**Constraints:**
+
+- `withdrawAmount > 0`  
+- `withdrawAmount <= depositAmount`  
+
+**Validations:**
+
+- User internal balance decreases correctly  
+- `totalStaked` updates accordingly  
+- Contract balance decreases  
+- ETH is correctly returned to the user  
+
+---
+
+### ✅ Reward Accrual Fuzz Tests
+
+**Property:**
+
+> Rewards must increase over time for any valid stake and time duration.
+
+**Constraints:**
+
+- `amount > 0`  
+- `timeJump > 0`  
+
+**Validations:**
+
+- Rewards after time progression are greater than zero  
+- Stake and total supply remain consistent  
+
+---
+
+### ✅ Reward Preservation Fuzz Tests
+
+**Property:**
+
+> Accumulated rewards must not be lost after a partial withdrawal.
+
+**Constraints:**
+
+- `withdrawAmount < depositAmount` (strictly partial withdrawal)  
+- `timeJump > 0`  
+
+**Validations:**
+
+- Rewards before and after withdrawal are equal  
+- Rewards remain positive  
+- User balance is updated correctly  
+
+This ensures correct usage of:
+
+```text
+updateReward(user)
+```
+before modifying balances.
+
+---
+### ✅ Claim Reward Fuzz Tests
+
+**Property:**
+
+- Claiming rewards transfers the correct amount and resets accumulated rewards.
+
+**Constraints:**
+
+- Valid stake amount
+- Reasonable time progression (bounded to avoid unrealistic reward growth)
+
+**Validations:**
+
+- User receives the exact accumulated reward
+- Reward balance is reset to zero after claim
+
+## ⚙️ Input Constraints
+
+To ensure meaningful fuzzing, inputs are bounded using:
+
+- vm.assume(...) for filtering invalid cases
+- Controlled ranges for:
+  - stake amounts
+  - withdraw amounts
+  - time progression
+
+This prevents:
+
+- invalid states (e.g. withdrawing more than deposited)
+- unrealistic scenarios (e.g. extremely large time jumps)
+
+---
+
 ## 🛠️ Tech Stack
 
 - Solidity `^0.8.20`
@@ -157,7 +299,9 @@ Run all tests:
 
 ```bash
 forge test -vv
+```
 
 Run only staking tests:
-
+```bash
 forge test --match-contract SimpleStakingTest -vv
+```
