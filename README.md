@@ -285,6 +285,148 @@ This prevents:
 
 ---
 
+## 🔒 Invariant Testing
+
+Invariant tests verify that critical properties of the contract always hold true, regardless of the sequence of actions performed.
+
+Unlike unit and fuzz tests, which validate specific scenarios, invariant tests ensure the system remains **consistent under arbitrary interactions**.
+
+---
+
+## 🏗️ Test Architecture
+
+The invariant testing suite is composed of two main components:
+
+---
+
+### 1. Handler Contract (`SimpleStakingHandler`)
+
+The handler acts as an intermediary that:
+
+- Executes randomized actions on the contract
+- Simulates multiple users interacting with the system
+- Tracks historical values required for invariant validation
+
+#### 👥 Users
+
+- Three simulated users:
+  - `alice`
+  - `bob`
+  - `charlie`
+- Each user is funded with **1,000 ETH**
+
+#### ⚙️ Available Actions
+
+- `stake(userSeed, amount)`
+  - Stakes a bounded random amount (`1 wei → 100 ETH`)
+  - Selects user based on `userSeed`
+
+- `withdraw(userSeed, amount)`
+  - Withdraws a bounded amount up to the user’s balance
+
+- `claimReward(userSeed)`
+  - Claims accumulated rewards for a random user
+
+- `warpTime(timeJump)`
+  - Advances blockchain time (`1 second → 7 days`)
+
+#### 📊 State Tracking
+
+To validate monotonic properties, the handler keeps track of historical maximum values:
+
+- `maxRewardPerTokenStoredSeen`
+- `maxLastUpdateTimeSeen`
+
+These values are updated after every interaction that may affect reward logic:
+stake / withdraw / claimReward
+
+This enables detection of **unexpected decreases** in critical state variables.
+
+---
+
+### 2. Invariant Tests (`SimpleStakingInvariantTest`)
+
+The following invariants are enforced:
+
+---
+
+### 📌 invariant_TotalStakedEqualsSumOfTrackedBalances
+
+**Definition:**
+
+The global `totalStaked` must always equal the sum of all tracked user balances.
+
+**Why it matters:**
+
+- Ensures internal accounting is correct
+- Prevents inconsistencies that could lead to fund loss or exploits
+
+---
+
+### 📌 invariant_UserBalanceNeverExceedsTotalStaked
+
+**Definition:**
+
+No individual user balance can exceed the total staked amount.
+
+**Why it matters:**
+
+- Prevents impossible states
+- Guarantees logical consistency of balances
+
+---
+
+### 📌 invariant_GetVaultBalanceMatchesRealBalance
+
+**Definition:**
+
+The contract’s `getVaultBalance()` must match the actual ETH balance.
+
+**Why it matters:**
+
+- Ensures getters reflect real on-chain state
+- Prevents misleading or manipulable outputs
+
+---
+
+### 📌 invariant_RewardPerTokenStoredNeverDecreases
+
+**Definition:**
+
+`rewardPerTokenStored` must be monotonic (never decrease).
+
+**Why it matters:**
+
+- This variable drives reward calculations
+- A decrease would indicate a critical bug in reward distribution logic
+
+**Implementation detail:**
+
+- The handler tracks the maximum observed value
+- The invariant ensures the contract value always matches this maximum
+
+---
+
+### 📌 invariant_LastUpdateTimeNeverDecreases
+
+**Definition:**
+
+`lastUpdateTime` must never decrease.
+
+**Why it matters:**
+
+- Reward calculations depend on time progression
+- A decrease would break temporal consistency
+
+**Implementation detail:**
+
+- The handler tracks the maximum observed timestamp
+- The invariant ensures the contract state never goes backwards in time
+
+
+
+---
+
 ## 🛠️ Tech Stack
 
 - Solidity `^0.8.20`
