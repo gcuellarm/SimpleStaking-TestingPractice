@@ -423,7 +423,134 @@ The contract’s `getVaultBalance()` must match the actual ETH balance.
 - The handler tracks the maximum observed timestamp
 - The invariant ensures the contract state never goes backwards in time
 
+---
+## ⚠️ Findings & Limitations
+### 1. Rewards Are Paid From the Same Pool as Staked Funds
 
+#### Description
+
+In this implementation, staking rewards are paid directly from the contract's ETH balance:
+
+```solidity
+(bool success, ) = payable(msg.sender).call{value: reward}("");
+```
+This means that both:
+ - *staked funds*
+ - *rewards*
+are sourced from the same pool.
+
+---
+
+### Impact
+As users claim rewards over time, the contract balance decreases while `totalStkaed` remains unchanged.
+This can lead to a state where:
+```solidity
+contract balance < totalStaked
+```
+Which breaks the assumption that the contract fully backs all staked funds.
+
+---
+### Root Cause
+The contract does not distinguish between:
+ - staking capital
+ - reward funding
+There is no separate mechanism to supply rewards.
+
+---
+### Why this Matters
+In production DeFi protocol , this design would be unsafe because:
+ - users could drain funds needed to back other stakers
+ - the system becomes economically unsustainable
+ - withdrawals may eventually fail
+
+---
+
+### Recommended Improvements
+A production-ready design should:
+ - introduce a dedicated reward pool (e.g. `fundRewards()` function), or
+ - use a separate reward token instead of ETH, or
+ - implement a sustainable reward emission model
+
+---
+
+## Education Note
+This limitation is intentional in this project to keep the implementation simple and focus on testing and core staking mechanics.
+
+---
+## 🔎 Findings
+## Severity
+**Severity:** High (in production scenario)
+
+## Exploit scenario
+An attacker could: 
+ 1. Stake a large amount
+ 2. Wait for rewards to accumulate
+ 3. Claim rewards repeatedly
+ 4. Drain contract balance affecting other users
+
+## Reward System Depends on Continuous User Interaction
+
+#### Description
+
+The reward calculation mechanism relies on user-triggered interactions (`stake`, `withdraw`, `claimReward`) to update the global state:
+
+```solidity
+rewardPerTokenStored = rewardPerToken();
+lastUpdateTime = block.timestamp;
+```
+No automatic update occurs over time unless a user interacts with the contract.
+
+### Impact
+If no users interact with the contract for a long period:
+ - rewards are not reflected in rewardPerTokenStored
+ - the system appears "stale" until the next interaction
+ - the first user to interact after inactivity triggers a large update
+
+### Root Cause
+The contract follows a lazy update model, where reward calculations are deferred until user interaction.
+
+### Why This Matters
+While this pattern is common in DeFi for gas efficiency, it introduces:
+ - delayed state updates
+ - dependence on user activity for correctness
+ - potential uneven gas costs (first caller after long inactivity pays more gas)
+
+### Recommended Improvements
+Possible improvements include:
+ - introducing periodic updates via automation (e.g. keepers)
+ - limiting maximum time delta in reward calculations
+ - documenting this behavior clearly for integrators
+
+## Potential Precision Loss Due to Integer Division
+Reward calculations rely on integer arithmetic:
+```solidity
+((block.timestamp - lastUpdateTime) * rewardRate * 1e18) / totalStaked;
+```
+Since Solidity does not support floating-point numbers, division truncates decimals.
+
+### Impact
+Over time, this can lead to:
+ - small rounding errors
+ - slight discrepancies in reward distribution
+ - unallocated "dust" remaining in the contract
+
+### Root Cause
+Integer division in Solidity always rounds down, causing precision loss in fractional calculations.
+
+### Why This Matters
+In long-running systems or high-volume protocols:
+ - rounding errors can accumulate
+ - total distributed rewards may be slightly lower than expected
+ - some value may remain locked in the contract
+
+### Recommended Improvements
+Common mitigation strategies:
+ - using higher precision (e.g. 1e18 scaling, already applied here)
+ - tracking and redistributing leftover dust
+ - using more advanced accounting models if precision is critical
+
+### Educational Note
+This limitation is inherent to Solidity and appears in nearly all DeFi protocols. The key is to understand and manage its impact rather than eliminate it entirely.
 
 ---
 
