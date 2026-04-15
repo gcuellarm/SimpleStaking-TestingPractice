@@ -45,8 +45,9 @@ contract SimpleStakingHandler is Test {
 
         vm.prank(user);
         try staking.stake{value: amount}() {
-            // ok
-        } catch {
+        // ok
+        }
+            catch {
             // ignore
         }
 
@@ -67,8 +68,9 @@ contract SimpleStakingHandler is Test {
 
         vm.prank(user);
         try staking.withdraw(amount) {
-            // ok
-        } catch {
+        // ok
+        }
+            catch {
             // ignore
         }
 
@@ -81,8 +83,9 @@ contract SimpleStakingHandler is Test {
 
         vm.prank(user);
         try staking.claimReward() {
-            // ok
-        } catch {
+        // ok
+        }
+            catch {
             // ignore
         }
 
