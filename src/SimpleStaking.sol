@@ -23,16 +23,11 @@ contract SimpleStaking {
             return rewardPerTokenStored;
         }
 
-        return rewardPerTokenStored +
-            ((block.timestamp - lastUpdateTime) * rewardRate * 1e18) / totalStaked;
+        return rewardPerTokenStored + ((block.timestamp - lastUpdateTime) * rewardRate * 1e18) / totalStaked;
     }
 
     function earned(address account) public view returns (uint256) {
-        return
-            (balances[account] *
-                (rewardPerToken() - userRewardPerTokenPaid[account])) /
-            1e18 +
-            rewards[account];
+        return (balances[account] * (rewardPerToken() - userRewardPerTokenPaid[account])) / 1e18 + rewards[account];
     }
 
     function updateReward(address account) internal {
@@ -63,7 +58,7 @@ contract SimpleStaking {
         balances[msg.sender] -= amount;
         totalStaked -= amount;
 
-        (bool success, ) = payable(msg.sender).call{value: amount}("");
+        (bool success,) = payable(msg.sender).call{value: amount}("");
         require(success);
     }
 
@@ -73,7 +68,7 @@ contract SimpleStaking {
         uint256 reward = rewards[msg.sender];
         rewards[msg.sender] = 0;
 
-        (bool success, ) = payable(msg.sender).call{value: reward}("");
+        (bool success,) = payable(msg.sender).call{value: reward}("");
         require(success);
     }
 

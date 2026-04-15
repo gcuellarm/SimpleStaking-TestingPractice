@@ -71,7 +71,7 @@ contract SimpleStakingHandler is Test {
         } catch {
             // ignore
         }
-        
+
         _trackRewardPerTokenStored();
         _trackLastUpdateTime();
     }
@@ -85,7 +85,7 @@ contract SimpleStakingHandler is Test {
         } catch {
             // ignore
         }
-        
+
         _trackRewardPerTokenStored();
         _trackLastUpdateTime();
     }

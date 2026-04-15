@@ -85,7 +85,7 @@ contract SimpleStakingTest is Test {
     }
 
     // =========================================================
-    // REWARD TESTS 
+    // REWARD TESTS
     // =========================================================
 
     function test_Rewards_AccumulateOverTime() public {
@@ -96,7 +96,7 @@ contract SimpleStakingTest is Test {
         uint256 initialReward = staking.earned(alice);
         vm.warp(block.timestamp + 1 hours);
         uint256 finalReward = staking.earned(alice);
-        
+
         // Assert
         assertGt(finalReward, initialReward);
     }

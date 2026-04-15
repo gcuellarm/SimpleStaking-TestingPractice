@@ -31,7 +31,7 @@ contract SimpleStakingFuzzTest is Test {
         // Act
         vm.prank(alice);
         staking.stake{value: amount}();
-        
+
         // Assert
         assertEq(address(staking).balance, amount);
         assertEq(staking.balances(alice), amount);
@@ -71,7 +71,7 @@ contract SimpleStakingFuzzTest is Test {
         vm.assume(amount > 0 && amount < 1_000 ether);
         vm.assume(timeJump > 0 && timeJump < 100 hours);
 
-        // Act               
+        // Act
         vm.prank(alice);
         staking.stake{value: amount}();
         vm.warp(block.timestamp + timeJump);
@@ -87,11 +87,9 @@ contract SimpleStakingFuzzTest is Test {
     // REWARD PRESERVATION FUZZ TESTS
     // =========================================================
 
-    function testFuzz_Withdraw_DoesNotLoseRewards(
-        uint256 depositAmount,
-        uint256 withdrawAmount,
-        uint256 timeJump
-    ) public {
+    function testFuzz_Withdraw_DoesNotLoseRewards(uint256 depositAmount, uint256 withdrawAmount, uint256 timeJump)
+        public
+    {
         // Arrange
         vm.assume(depositAmount > 0 && depositAmount < 1_000 ether);
         vm.assume(withdrawAmount > 0 && withdrawAmount < depositAmount);
@@ -107,7 +105,7 @@ contract SimpleStakingFuzzTest is Test {
         staking.withdraw(withdrawAmount);
         vm.stopPrank();
         uint256 rewardAfterWithdraw = staking.earned(alice);
-        
+
         // Assert
         assertEq(rewardAfterWithdraw, rewardAfterTimeJump);
         assertGt(rewardAfterWithdraw, 0);
@@ -124,7 +122,7 @@ contract SimpleStakingFuzzTest is Test {
         vm.assume(amount > 0 && amount < 1_000 ether);
         vm.assume(timeJump > 0 && timeJump <= 1 days);
 
-       // Act
+        // Act
         vm.prank(alice);
         staking.stake{value: amount}();
 
