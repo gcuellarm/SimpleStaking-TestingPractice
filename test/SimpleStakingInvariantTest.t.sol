@@ -31,6 +31,10 @@ contract SimpleStakingHandler is Test {
         vm.deal(alice, 1_000 ether);
         vm.deal(bob, 1_000 ether);
         vm.deal(charlie, 1_000 ether);
+        vm.deal(address(staking), 100_000 ether);
+
+        maxRewardPerTokenStoredSeen = staking.rewardPerTokenStored();
+        maxLastUpdateTimeSeen = staking.lastUpdateTime();
     }
 
     function stake(uint256 userSeed, uint256 amount) external {

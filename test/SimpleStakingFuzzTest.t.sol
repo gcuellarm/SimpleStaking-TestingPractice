@@ -122,6 +122,8 @@ contract SimpleStakingFuzzTest is Test {
         vm.assume(amount > 0 && amount < 1_000 ether);
         vm.assume(timeJump > 0 && timeJump <= 1 days);
 
+        vm.deal(address(staking), 10_000 ether);
+
         // Act
         vm.prank(alice);
         staking.stake{value: amount}();

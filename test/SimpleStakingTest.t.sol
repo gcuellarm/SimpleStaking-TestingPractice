@@ -183,6 +183,8 @@ contract SimpleStakingTest is Test {
 
     function test_ClaimReward_Works() public {
         // Arrange
+        vm.deal(address(staking), 1000 ether);
+        
         vm.prank(alice);
         staking.stake{value: 10 ether}();
 
@@ -203,6 +205,8 @@ contract SimpleStakingTest is Test {
 
     function test_ClaimReward_ResetsReward() public {
         // Arrange
+        vm.deal(address(staking), 1000 ether);
+        
         vm.prank(alice);
         staking.stake{value: 10 ether}();
 
